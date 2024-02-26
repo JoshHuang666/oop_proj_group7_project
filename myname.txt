@@ -1,6 +1,4 @@
-Wei Tzu-Chieh
-112511266 電機系大一
-Matthew Tu
-112511255 電機系大一
-Yang Kai-Ming
-112511271 電機系大一
+Wei Tzu-Chieh, Matthew Tu, Yang Kai-Ming
+112511266 <Wei Tzu-Chieh>  電機系大一
+112511255 <Matthew Tu>  電機系大一
+112511271 <Yang Kai-Ming>  電機系大一
