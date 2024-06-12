@@ -14,9 +14,20 @@ pygame.display.set_caption("Flappy Bird")
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 GRAY = (192, 192, 192)
+GREEN = (0, 255, 0)
+RED = (255, 0, 0)
+GOLD = (255, 215, 0)
 
 # Score
 font = pygame.font.SysFont(None, 30)
+
+# Background image
+background_image = pygame.image.load('background.jpg').convert()
+background_image = pygame.transform.scale(background_image, (WIDTH, HEIGHT))
+
+#Return button image
+return_button_image = pygame.image.load('return.png').convert_alpha()
+return_button_image = pygame.transform.scale(return_button_image, (50, 50))
 
 class GameObject:
     def __init__(self, x, y, width, height, color):
@@ -61,6 +72,7 @@ class Obstacle(GameObject):
     def __init__(self, x, y, width, height, color):
         super().__init__(x, y, width, height, color)
         self.collided = False
+        self.color = color
 
 class Game:
     button_gap = 20
@@ -86,9 +98,11 @@ class Game:
         obstacle_width = 40
         top_height = random.randint(50, HEIGHT - gap - 50)
         bottom_height = HEIGHT - top_height - gap
-        top_obstacle = Obstacle(WIDTH, 0, obstacle_width, top_height, WHITE)
-        bottom_obstacle = Obstacle(WIDTH, top_height + gap, obstacle_width, bottom_height, WHITE)
+        color = random.choice([GREEN, RED, GOLD])  # Choose a random color for the obstacle
+        top_obstacle = Obstacle(WIDTH, 0, obstacle_width, top_height, color)
+        bottom_obstacle = Obstacle(WIDTH, top_height + gap, obstacle_width, bottom_height, color)
         self.obstacles.extend([top_obstacle, bottom_obstacle])
+
 
     def draw_score(self):
         score_text = font.render(f"Score: {self.score}", True, WHITE)
@@ -142,14 +156,17 @@ class Game:
 
             for obstacle in self.obstacles:
                 obstacle.rect.x -= 5
-                if obstacle.rect.colliderect(self.player.rect) and not obstacle.collided:
-                    obstacle.collided = True
-                    self.score += 1
-
-                if obstacle.rect.x + obstacle.rect.width < self.player.rect.x and not obstacle.collided:
-                    obstacle.collided = True
-                    self.score += 1
-
+                if (obstacle.rect.x < self.player.rect.x < obstacle.rect.x + obstacle.rect.width and
+                        (self.player.rect.y < obstacle.rect.y or
+                         self.player.rect.y + self.player.rect.height > obstacle.rect.y + obstacle.rect.height)):
+                    if not obstacle.collided:
+                        obstacle.collided = True
+                        if obstacle.color == GREEN:
+                            self.score += 1
+                        elif obstacle.color == RED:
+                            self.score += 3
+                        elif obstacle.color == GOLD:
+                            self.score += 5
                 if obstacle.rect.colliderect(self.player.rect):
                     self.end_game()
 
@@ -158,7 +175,7 @@ class Game:
         return True
 
     def draw(self):
-        WIN.fill(BLACK)
+        WIN.blit(background_image, (0, 0))
         self.player.draw(WIN)
         for obstacle in self.obstacles:
             obstacle.draw(WIN)
@@ -204,6 +221,9 @@ class Game:
         while len(ranking) < 3:  # Fill the remaining slots with zeros if needed
             ranking.append(0)
         ranking_screen = True
+        return_button_x = (WIDTH - 50) // 2
+        return_button_y = HEIGHT - 100
+        return_button_rect = pygame.Rect(return_button_x, return_button_y, 50, 50)
         while ranking_screen:
             WIN.fill(BLACK)
             font = pygame.font.SysFont('comicsans', 40)
@@ -212,13 +232,18 @@ class Game:
             for i, score in enumerate(ranking):
                 text = font.render(str(score), 1, WHITE)
                 WIN.blit(text, (WIDTH // 2 - text.get_width() // 2, 150 + i * 50))
+
+            # Draw return button
+            WIN.blit(return_button_image, (return_button_x, return_button_y))
+
             pygame.display.update()
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     ranking_screen = False
                 if event.type == pygame.MOUSEBUTTONDOWN:
-                    ranking_screen = False
+                    if return_button_rect.collidepoint(event.pos):  # Check if return button is clicked
+                        ranking_screen = False
 
     def run(self):
         clock = pygame.time.Clock()
