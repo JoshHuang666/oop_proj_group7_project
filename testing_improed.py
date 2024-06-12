@@ -92,7 +92,7 @@ class RightButton(Button):
         return False
 
 
-class Player(GameObject):
+class RegularPlayer(GameObject):
     def __init__(self, x, y, size, color):
         super().__init__(x, y, size, size, color)
         self.vel = 0
@@ -100,14 +100,14 @@ class Player(GameObject):
     def jump(self):
         self.vel = -10
 
-class LazyPlayer(Player):
+class HeavyPlayer(RegularPlayer):
     def __init__(self, x, y, size, color):
         super().__init__(x, y, size, color)
 
     def jump(self):
         self.vel = -5
 
-class SmallPlayer(Player):
+class SmallPlayer(RegularPlayer):
     def __init__(self, x, y, size, color):
         super().__init__(x, y, size, color)
         self.size = size // 2
@@ -125,7 +125,7 @@ class Game:
     BUTTON_GAP = 20
 
     def __init__(self):
-        self.players = [Player, LazyPlayer, SmallPlayer]  # List of player classes
+        self.players = [RegularPlayer, HeavyPlayer, SmallPlayer]  # List of player classes
         self.player_parameters = [(50, HEIGHT // 2 - 25, 50, WHITE), (50, HEIGHT // 2 - 25, 50, BLUE), (50, HEIGHT // 2 - 25, 30, BLACK)]  # List of player classes
         self.current_player_index = 0  # Start with the first player class
         self.player = self.get_current_player()  # Get the current player object
