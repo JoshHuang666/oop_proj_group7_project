@@ -113,7 +113,7 @@ class SmallPlayer(Player):
         self.size = size // 2
 
     def jump(self):
-        self.vel = -15
+        self.vel = -13
 
 class Obstacle(GameObject):
     def __init__(self, x, y, width, height, color):
@@ -316,6 +316,22 @@ class Game:
             # Draw current player's image
             self.update_current_player_image()
 
+            # Draw text describing player characteristics
+            font = pygame.font.SysFont('comicsans', 24)
+            text = font.render(self.get_current_player_description(), 1, BLACK)
+            text_rect = text.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 70))
+            
+            # Create a surface with a white background
+            description_surface = pygame.Surface((text_rect.width + 10, text_rect.height + 10))
+            description_surface.fill(WHITE)
+
+            # Blit the text onto the description surface
+            description_surface.blit(text, (5, 5))
+
+            # Blit the description surface onto the window
+            WIN.blit(description_surface, (text_rect.x - 5, text_rect.y - 5))
+
+
             self.left_button.draw(WIN)
             self.right_button.draw(WIN)
 
@@ -379,6 +395,12 @@ class Game:
 
         # Blit the updated image onto the window
         WIN.blit(self.current_player_image, self.current_player_image_rect)
+
+    def get_current_player_description(self):
+        descriptions = ["Normal Player: Jumps normally.",
+                        "Lazy Player: Jumps less higher.",
+                        "Small Player: Smaller size."]
+        return descriptions[self.current_player_index]
         
     def run(self):
         clock = pygame.time.Clock()
