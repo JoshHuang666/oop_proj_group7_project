@@ -7,7 +7,7 @@ pygame.init()
 # Set up display
 WIDTH, HEIGHT = 500, 500
 WIN = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Flappy Bird")
+pygame.display.set_caption("Flappy Cube")
 
 # Colors
 WHITE = (255, 255, 255)
