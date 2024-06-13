@@ -37,6 +37,13 @@ left_button_image = pygame.transform.scale(left_button_image, (50, 50))
 right_button_image = pygame.image.load('right.png').convert_alpha()
 right_button_image = pygame.transform.scale(right_button_image, (50, 50))
 
+# Setting button image
+setting_button_image = pygame.image.load('setting.png').convert_alpha()
+setting_button_image = pygame.transform.scale(setting_button_image, (50, 50))
+
+# Pause button image
+pause_button_image = pygame.image.load('pause.png').convert_alpha()
+pause_button_image = pygame.transform.scale(pause_button_image, (50, 50))
 
 class GameObject:
     def __init__(self, x, y, width, height, color):
@@ -91,6 +98,33 @@ class RightButton(Button):
                 return True
         return False
 
+class SettingButton(Button):
+    def __init__(self, x, y, width, height, image):
+        super().__init__(x, y, width, height, None)
+        self.image = image
+
+    def draw(self, window):
+        window.blit(setting_button_image, (self.rect.x, self.rect.y))
+
+    def handle_event(self, event):
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if self.rect.collidepoint(event.pos):
+                return True
+        return False
+    
+class PauseButton(Button):
+    def __init__(self, x, y, width, height, image):
+        super().__init__(x, y, width, height, None)
+        self.image = image
+
+    def draw(self, window):
+        window.blit(pause_button_image, (self.rect.x, self.rect.y))
+
+    def handle_event(self, event):
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if self.rect.collidepoint(event.pos):
+                return True
+        return False
 
 class RegularPlayer(GameObject):
     def __init__(self, x, y, size, color):
@@ -155,6 +189,25 @@ class Game:
         self.current_player_image = pygame.Surface((50, 50))
         self.current_player_image_rect = self.current_player_image.get_rect(center=(WIDTH // 2, HEIGHT // 2))
 
+        # Create pause button
+        pause_button_x = WIDTH - 50
+        pause_button_y = 0
+        self.pause_button = PauseButton(pause_button_x, pause_button_y, 50, 50, pause_button_image)
+
+        # Create resume button
+        resume_button_width, resume_button_height = 150, 50
+        resume_button_x = (WIDTH - resume_button_width) // 2
+        resume_button_y = HEIGHT // 2 + 50
+        self.resume_button = Button(resume_button_x, resume_button_y, resume_button_width, resume_button_height, GRAY, 'Resume')
+
+        # Create restart button
+        restart_button_width, restart_button_height = 150, 50
+        restart_button_x = (WIDTH - restart_button_width) // 2
+        restart_button_y = HEIGHT // 2 + 150
+        self.restart_button = Button(restart_button_x, restart_button_y, restart_button_width, restart_button_height, GRAY, 'Restart')
+
+        self.paused = False
+
     def create_buttons(self):
         # Start button
         button_width, button_height = 100, 50
@@ -169,6 +222,11 @@ class Game:
         # Select button
         select_button_y = start_button_y + self.BUTTON_GAP * 4  # Adjusted gap
         self.select_button = Button(button_x, select_button_y, button_width, button_height, GRAY, 'Select')
+
+        #Setting button
+        setting_button_x = WIDTH - 50  # Adjusted x-coordinate
+        setting_button_y = 0  # Adjusted y-coordinate
+        self.setting_button = SettingButton(setting_button_x, setting_button_y, button_width, button_height, setting_button_image)
 
     def generate_obstacle(self):
         gap = 150
@@ -203,6 +261,8 @@ class Game:
                         self.show_ranking()
                     elif self.select_button.is_clicked(pygame.mouse.get_pos()):
                         self.show_character_select_window()  # Show character select window when select button is clicked
+                    elif self.setting_button.is_clicked(pygame.mouse.get_pos()):
+                        self.show_setting_window()
                 elif self.game_over:
                     if self.start_button.is_clicked(pygame.mouse.get_pos()):
                         self.start_game()  # Restart the game when start button is clicked
@@ -210,9 +270,22 @@ class Game:
                         self.show_ranking()  # Show ranking when ranking button is clicked
                     elif self.select_button.is_clicked(pygame.mouse.get_pos()):
                         self.show_character_select_window()  # Show character select window when select button is clicked
-            if event.type == pygame.KEYDOWN and self.game_started:  # Only handle key events when the game is started
+                    elif self.setting_button.is_clicked(pygame.mouse.get_pos()):
+                        self.show_setting_window() #Show setting window when setting button is clicked
+                elif self.paused:
+                    if self.resume_button.is_clicked(pygame.mouse.get_pos()):
+                        self.paused = False
+                    elif self.restart_button.is_clicked(pygame.mouse.get_pos()):
+                        self.start_game()
+                        self.paused = False
+                else:
+                    if self.pause_button.is_clicked(pygame.mouse.get_pos()):
+                        self.paused = True
+            if event.type == pygame.KEYDOWN and self.game_started and not self.paused:  # Only handle key events when the game is started
                 if event.key == pygame.K_SPACE:
                     self.player.jump()
+                elif event.key == pygame.K_p:
+                    self.paused = not self.paused
         return True
 
     def start_game(self):
@@ -224,7 +297,7 @@ class Game:
         self.game_over = False
 
     def update(self):
-        if self.game_started:
+        if self.game_started and not self.paused:  # Update the game only if it's not paused
             self.player.rect.y += self.player.vel
             self.player.vel += 1
 
@@ -251,20 +324,39 @@ class Game:
         return True
 
     def draw(self):
-        WIN.blit(background_image, (0, 0))
-        self.player.draw(WIN)
-        for obstacle in self.obstacles:
-            obstacle.draw(WIN)
-        self.draw_score()
-        if not self.game_started:
-            if not self.game_over:
-                self.start_button.draw(WIN, WHITE)
-                self.select_button.draw(WIN, WHITE)
-            else:
-                self.start_button.draw(WIN, WHITE)
-                self.select_button.draw(WIN, WHITE)
-                self.ranking_button.draw(WIN, WHITE)
-        pygame.display.update()
+        if not self.paused:  # Only draw game elements if the game is not paused
+            WIN.blit(background_image, (0, 0))
+            self.player.draw(WIN)
+            for obstacle in self.obstacles:
+                obstacle.draw(WIN)
+            self.draw_score()
+            if not self.game_started:
+                if not self.game_over:
+                    self.start_button.draw(WIN, WHITE)
+                    self.select_button.draw(WIN, WHITE)
+                    self.ranking_button.draw(WIN, WHITE)
+                    self.setting_button.draw(WIN)
+                else:
+                    self.start_button.draw(WIN, WHITE)
+                    self.select_button.draw(WIN, WHITE)
+                    self.ranking_button.draw(WIN, WHITE)
+                    self.setting_button.draw(WIN)
+            elif self.game_started and not self.game_over:
+                self.pause_button.draw(WIN)
+            pygame.display.update()
+        else:
+            # Draw pause text
+            font = pygame.font.SysFont('comicsans', 50)
+            text = font.render('Paused', 1, WHITE)
+            WIN.blit(text, (WIDTH // 2 - text.get_width() // 2, HEIGHT // 2 - text.get_height() // 2))
+
+            # Draw resume button
+            self.resume_button.draw(WIN)
+
+            #Draw restart button
+            self.restart_button.draw(WIN)
+
+            pygame.display.update()
 
     def end_game(self):
         self.game_started = False
@@ -273,6 +365,7 @@ class Game:
         self.best_scores.sort(reverse=True)  # Sort the list of all scores in descending order
         self.best_scores = self.best_scores[:3]  # Update the best three scores
         self.player.vel = 0  # Reset the player's velocity for the next game
+        self.paused = False  # Ensure game is not paused when ending
 
     def show_ranking(self):
         ranking = self.best_scores  # Get the best three scores
@@ -359,6 +452,58 @@ class Game:
                     # Check if return button is clicked
                     elif return_button_rect.collidepoint(event.pos):
                         character_select_window = False
+
+    def show_setting_window(self):
+        setting_window = True
+        return_button_x = (WIDTH - 50) // 2
+        return_button_y = HEIGHT - 100
+        return_button_rect = pygame.Rect(return_button_x, return_button_y, 50, 50)
+
+        while setting_window:
+            WIN.blit(background_image, (0, 0))
+            # Display setting window content
+            self.display_setting_window(WIN)
+
+            # Draw return button
+            WIN.blit(return_button_image, (return_button_x, return_button_y))
+
+            pygame.display.update()
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    setting_window = False
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    # Check if return button is clicked
+                    if return_button_rect.collidepoint(event.pos):
+                        setting_window = False
+
+    def display_setting_window(self, window):
+        font = pygame.font.SysFont('comicsans', 36)
+        text = [
+            "Game Rules:",
+            "- Press SPACE to make the cube jump.",
+            "- Avoid colliding with obstacles.",
+            "- Collect green obstacles to score 1 point.",
+            "- Collect red obstacles to score 3 points.",
+            "- Collect gold obstacles to score 5 points.",
+            "- Have fun!"
+        ]
+        y_offset = 50
+        for line in text:
+            line_surface = font.render(line, True, BLACK)  # Render text with black color
+            line_rect = line_surface.get_rect(center=(WIDTH // 2, y_offset))
+        
+            # Create a surface with a white background
+            background_surface = pygame.Surface((line_rect.width + 20, line_rect.height + 20))
+            background_surface.fill(WHITE)
+        
+            # Blit the text onto the background surface
+            background_surface.blit(line_surface, (10, 10))
+        
+            # Blit the background surface onto the window
+            window.blit(background_surface, (line_rect.x - 10, line_rect.y - 10))
+        
+            y_offset += 40  # Adjust vertical spacing
 
     def switch_to_previous_character(self):
         self.current_player_index -= 1
