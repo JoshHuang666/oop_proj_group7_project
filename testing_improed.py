@@ -397,8 +397,8 @@ class Game:
         WIN.blit(self.current_player_image, self.current_player_image_rect)
 
     def get_current_player_description(self):
-        descriptions = ["Normal Player: Jumps normally.",
-                        "Lazy Player: Jumps less higher.",
+        descriptions = ["Regular Player: Jumps normally.",
+                        "Heavy Player: Jumps less higher.",
                         "Small Player: Smaller size."]
         return descriptions[self.current_player_index]
         
