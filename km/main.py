@@ -31,7 +31,7 @@ game_over_sound.set_volume(1.0) # Set the volume to 100%
 pygame.time.delay(1000)
 background_music = pygame.mixer.music.load('audio/background.wav')
 pygame.mixer.music.set_volume(0.5)
-# pygame.mixer.music.play(-1)
+
 
 # Score
 font = pygame.font.SysFont(None, 30)
