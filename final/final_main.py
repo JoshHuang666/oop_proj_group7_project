@@ -277,8 +277,8 @@ class Game:
         setting_button_y = 0  # Adjusted y-coordinate
         self.setting_button = SettingButton(setting_button_x, setting_button_y, button_width, button_height, setting_button_image)
 
-    def generate_obstacle(self):
-        gap = 150
+    def generate_obstacle(self, gap):
+        self.gap = gap
         obstacle_width = 40
         top_height = random.randint(50, HEIGHT - gap - 50)
         bottom_height = HEIGHT - top_height - gap
@@ -345,6 +345,13 @@ class Game:
         self.player.vel = 0  # Reset player's velocity
         self.obstacles = []
         self.game_over = False
+        self.gap = 200
+        if self.current_player_index == 0:
+            self.obstacles_distance = 200
+        elif self.current_player_index == 1:
+            self.obstacles_distance = 300
+        elif self.current_player_index == 2:
+            self.obstacles_distance = 150
         pygame.mixer.music.stop()
         background_music = pygame.mixer.music.load('final/audio/background.wav')
         pygame.mixer.music.play(-1)  # Play the new background music indefinitely
@@ -357,8 +364,9 @@ class Game:
             if self.player.rect.y <= 0 or self.player.rect.y + self.player.rect.height >= HEIGHT:
                 self.end_game()
 
-            if len(self.obstacles) == 0 or self.obstacles[-1].rect.x < WIDTH - 200:
-                self.generate_obstacle()
+            if len(self.obstacles) == 0 or self.obstacles[-1].rect.x < WIDTH - self.obstacles_distance:
+                self.generate_obstacle(self.gap)
+                self.gap = self.gap - 5 if self.gap > 70 else 70
 
             for obstacle in self.obstacles:
                 obstacle.rect.x -= 5
