@@ -20,7 +20,7 @@ GOLD = (255, 215, 0)
 BLUE = (0, 0, 255)
 
 # Load Sound files
-jump_sound = pygame.mixer.Sound('final/audio/jump.wav')
+jump_sound = pygame.mixer.Sound('final/audio/jump1.wav')
 jump_sound.set_volume(1.0) # Set the volume to 100% 
 score_sound = pygame.mixer.Sound('final/audio/score.wav')
 game_over_sound = pygame.mixer.Sound('final/audio/game_over.wav')
@@ -145,6 +145,8 @@ class RegularPlayer(GameObject):
 
     def jump(self):
         self.vel = -10
+        jump_sound = pygame.mixer.Sound('final/audio/jump1.wav')
+        jump_sound.play()
 
 class HeavyPlayer(RegularPlayer):
     def __init__(self, x, y, size, color):
@@ -152,6 +154,8 @@ class HeavyPlayer(RegularPlayer):
 
     def jump(self):
         self.vel = -5
+        jump_sound = pygame.mixer.Sound('final/audio/jump3.wav')
+        jump_sound.play()
 
 class SmallPlayer(RegularPlayer):
     def __init__(self, x, y, size, color):
@@ -160,6 +164,8 @@ class SmallPlayer(RegularPlayer):
 
     def jump(self):
         self.vel = -13
+        jump_sound = pygame.mixer.Sound('final/audio/jump2.wav')
+        jump_sound.play()
 
 class Obstacle(GameObject):
     def __init__(self, x, y, width, height, color):
