@@ -1,5 +1,8 @@
 import pygame
 import random
+import pygame_widgets
+from pygame_widgets.slider import Slider
+from pygame_widgets.textbox import TextBox
 
 # Initialize Pygame
 pygame.init()
@@ -28,6 +31,7 @@ game_over_sound.set_volume(1.0) # Set the volume to 100%
 
 pygame.time.delay(1000)
 background_music = pygame.mixer.music.load('final/audio/background.wav')
+background_music2 = pygame.mixer.music.load('final/audio/background_music2.wav')
 pygame.mixer.music.set_volume(0.5)
 
 # Score
@@ -56,6 +60,14 @@ setting_button_image = pygame.transform.scale(setting_button_image, (50, 50))
 # Pause button image
 pause_button_image = pygame.image.load('final/images/pause.png').convert_alpha()
 pause_button_image = pygame.transform.scale(pause_button_image, (50, 50))
+
+# Sound button image
+louder_button_image = pygame.image.load('final/images/loudersound.png').convert_alpha()
+louder_button_image = pygame.transform.scale(louder_button_image, (50, 50))
+lower_button_image = pygame.image.load('final/images/lowersound.png').convert_alpha()
+lower_button_image = pygame.transform.scale(lower_button_image, (50, 50))
+mute_button_image = pygame.image.load('final/images/mute.png').convert_alpha()
+mute_button_image = pygame.transform.scale(mute_button_image, (50, 50))
 
 class GameObject:
     def __init__(self, x, y, width, height, color):
@@ -104,6 +116,7 @@ class RightButton(Button):
 
     def draw(self, window):
         window.blit(right_button_image, (self.rect.x, self.rect.y))
+    
     def handle_event(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN:
             if self.rect.collidepoint(event.pos):
@@ -133,6 +146,20 @@ class PauseButton(Button):
         window.blit(pause_button_image, (self.rect.x, self.rect.y))
 
     def handle_event(self, event):
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if self.rect.collidepoint(event.pos):
+                return True
+        return False
+    
+class SoundButton(Button):
+    def __init__(self, x, y, width, height, image):
+        super().__init__(x, y, width, height, None)
+        self.image = image
+
+    def draw(self, window):
+        window.blit(self.image, (self.rect.x, self.rect.y))
+
+    def handle_event(self, event, volume):
         if event.type == pygame.MOUSEBUTTONDOWN:
             if self.rect.collidepoint(event.pos):
                 return True
@@ -181,6 +208,10 @@ class Game:
 
         # Create buttons
         self.create_buttons()
+
+        # Play background music
+        background_music2 = pygame.mixer.music.load('final/audio/background_music2.wav')
+        pygame.mixer.music.play(-1)
 
         self.game_started = False
         self.game_over = False
@@ -296,6 +327,7 @@ class Game:
             if event.type == pygame.KEYDOWN and self.game_started and not self.paused:  # Only handle key events when the game is started
                 if event.key == pygame.K_SPACE:
                     self.player.jump()
+                    jump_sound.play()
                 elif event.key == pygame.K_p:
                     self.paused = not self.paused
         return True
@@ -308,7 +340,7 @@ class Game:
         self.obstacles = []
         self.game_over = False
         pygame.mixer.music.stop()
-        background_music = pygame.mixer.music.load('audio/background.wav')  # Load the new background music
+        background_music = pygame.mixer.music.load('final/audio/background.wav')
         pygame.mixer.music.play(-1)  # Play the new background music indefinitely
 
     def update(self):
@@ -329,6 +361,7 @@ class Game:
                 else:
                     if not obstacle.collided and obstacle.rect.x + obstacle.rect.width < self.player.rect.x:
                         obstacle.collided = True
+                        score_sound.play()
                         if obstacle.color == GREEN:
                             self.score += 1
                         elif obstacle.color == RED:
@@ -382,8 +415,8 @@ class Game:
         self.player.vel = 0  # Reset the player's velocity for the next game
         self.paused = False  # Ensure game is not paused when ending
         pygame.mixer.music.stop()
-        game_over_sound.play() 
-        background_music = pygame.mixer.music.load('audio/background_music2.wav')  # Load the new background music
+        game_over_sound.play()
+        background_music2 = pygame.mixer.music.load('final/audio/background_music2.wav')
         pygame.mixer.music.play(-1)  # Play the new background music indefinitely
 
     def show_ranking(self):
@@ -478,6 +511,16 @@ class Game:
         return_button_y = HEIGHT - 100
         return_button_rect = pygame.Rect(return_button_x, return_button_y, 50, 50)
 
+        lower_button_x = (HEIGHT - 200) // 2
+        lower_button_y = HEIGHT // 2 + 50
+        lower_button_rect = pygame.Rect(lower_button_x, lower_button_y, 50, 50)
+        louder_button_x = lower_button_x + 150
+        louder_button_y = HEIGHT // 2 + 50
+        louder_button_rect = pygame.Rect(louder_button_x, louder_button_y, 50, 50)
+        mute_button_x = lower_button_x + 75
+        mute_button_y = HEIGHT // 2 + 50
+        mute_button_rect = pygame.Rect(mute_button_x, mute_button_y, 50, 50)
+        
         while setting_window:
             WIN.blit(background_image, (0, 0))
             # Display setting window content
@@ -486,25 +529,39 @@ class Game:
             # Draw return button
             WIN.blit(return_button_image, (return_button_x, return_button_y))
 
+            # Draw volume buttons
+            WIN.blit(louder_button_image, (louder_button_x, louder_button_y))
+            WIN.blit(lower_button_image, (lower_button_x, lower_button_y))
+            WIN.blit(mute_button_image, (mute_button_x, mute_button_y))
+            
             pygame.display.update()
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    setting_window = False
+                    pygame.quit()
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     # Check if return button is clicked
                     if return_button_rect.collidepoint(event.pos):
                         setting_window = False
+                    elif mute_button_rect.collidepoint(event.pos):
+                        pygame.mixer.music.set_volume(0)
+                    elif lower_button_rect.collidepoint(event.pos):
+                        if pygame.mixer.music.get_volume() > 0:
+                            pygame.mixer.music.set_volume(pygame.mixer.music.get_volume() - 0.1)
+                    elif louder_button_rect.collidepoint(event.pos):
+                        if pygame.mixer.music.get_volume() < 1:
+                            pygame.mixer.music.set_volume(pygame.mixer.music.get_volume() + 0.1)
 
     def display_setting_window(self, window):
-        font = pygame.font.SysFont('comicsans', 36)
+        font = pygame.font.SysFont('comicsans', 24)
         text = [
             "Game Rules:",
             "- Press SPACE to make the cube jump.",
+            "- Press P to pause the game.",
             "- Avoid colliding with obstacles.",
-            "- Collect green obstacles to score 1 point.",
-            "- Collect red obstacles to score 3 points.",
-            "- Collect gold obstacles to score 5 points.",
+            "- Collect green obstacles to score 2 point.",
+            "- Collect red obstacles to score 6 points.",
+            "- Collect gold obstacles to score 10 points.",
             "- Have fun!"
         ]
         y_offset = 50
@@ -522,7 +579,7 @@ class Game:
             # Blit the background surface onto the window
             window.blit(background_surface, (line_rect.x - 10, line_rect.y - 10))
         
-            y_offset += 40  # Adjust vertical spacing
+            y_offset += 30  # Adjust vertical spacing
 
     def switch_to_previous_character(self):
         self.current_player_index -= 1

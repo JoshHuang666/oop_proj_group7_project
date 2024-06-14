@@ -16,7 +16,7 @@ GRAY = (192, 192, 192)
 BLUE = (0, 0, 255)
 
 # Load background music
-audio_path = os.path.join(os.path.dirname(__file__), 'audio')  # Path to the 'audio' directory
+audio_path = os.path.join(os.path.dirname(__file__), 'final/audio')  # Path to the 'audio' directory
 background_music_a = os.path.join(audio_path, 'background_a.wav')
 background_music_b = os.path.join(audio_path, 'background_b.wav')
 background_music_c = os.path.join(audio_path, 'background_c.wav')
