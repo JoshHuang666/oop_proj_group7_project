@@ -7,7 +7,7 @@ pygame.init()
 # Set up display
 WIDTH, HEIGHT = 500, 500
 WIN = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Flappy Cube")
+pygame.display.set_caption("Flappy Bird")
 
 # Colors
 WHITE = (255, 255, 255)
@@ -50,9 +50,9 @@ OBSTACLE_WIDTH = 40
 # No need to scale images here, they will be scaled in the Obstacle class based on their actual height
 
 # bird image
-normal_player_image = pygame.image.load('normal bird.png').convert_alpha()
-punk_player_image = pygame.image.load('punk bird.png').convert_alpha()
-lazy_player_image = pygame.image.load('lazy bird.png').convert_alpha()
+Normal_Bird_image = pygame.image.load('normal bird.png').convert_alpha()
+Lazy_Bird_image = pygame.image.load('lazy bird.png').convert_alpha()
+Small_Bird_image = pygame.image.load('small bird.png').convert_alpha()
 
 class GameObject:
     def __init__(self, x, y, width, height, color):
@@ -156,9 +156,9 @@ class Game:
     def __init__(self):
         self.players = [RegularPlayer, HeavyPlayer, SmallPlayer]  # List of player classes
         self.player_parameters = [
-        (50, HEIGHT // 2 - 25, 50, WHITE, normal_player_image),
-        (50, HEIGHT // 2 - 25, 50, BLUE, punk_player_image),
-        (50, HEIGHT // 2 - 25, 50, BLACK, lazy_player_image)  # Keep size consistent
+        (50, HEIGHT // 2 - 25, 50, WHITE, Normal_Bird_image),
+        (50, HEIGHT // 2 - 25, 50, BLUE, Lazy_Bird_image),
+        (50, HEIGHT // 2 - 25, 50, BLACK, Small_Bird_image)  # Keep size consistent
         ]
 
         self.current_player_index = 0  # Start with the first player class
@@ -420,11 +420,11 @@ class Game:
 
     def update_current_player_image(self):
         if self.current_player_index == 0:
-            self.current_player_image = normal_player_image
+            self.current_player_image = Normal_Bird_image
         elif self.current_player_index == 1:
-            self.current_player_image = punk_player_image
+            self.current_player_image = Lazy_Bird_image
         elif self.current_player_index == 2:
-            self.current_player_image = lazy_player_image
+            self.current_player_image = Small_Bird_image
 
         self.current_player_image = pygame.transform.scale(self.current_player_image, (self.player.rect.width, self.player.rect.height))
         self.current_player_image_rect = self.current_player_image.get_rect(center=(WIDTH // 2, HEIGHT // 2))
@@ -433,9 +433,9 @@ class Game:
         WIN.blit(self.current_player_image, self.current_player_image_rect)
 
     def get_current_player_description(self):
-        descriptions = ["Normal Player: Jumps normally.",
-                        "Lazy Player: Jumps less higher.",
-                        "Small Player: Smaller size."]
+        descriptions = ["Normal Bird: Jumps normally.",
+                        "Lazy Bird: Jumps less higher.",
+                        "Small Bird: Smaller size."]
         return descriptions[self.current_player_index]
         
     def run(self):
