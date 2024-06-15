@@ -47,9 +47,12 @@ bottom_gold_pipe_image = pygame.image.load('bottom_gold_pipe.png').convert_alpha
 
 # Define obstacle width and a general height for scaling purposes
 OBSTACLE_WIDTH = 40
-
 # No need to scale images here, they will be scaled in the Obstacle class based on their actual height
 
+# bird image
+normal_player_image = pygame.image.load('normal bird.png').convert_alpha()
+punk_player_image = pygame.image.load('punk bird.png').convert_alpha()
+lazy_player_image = pygame.image.load('lazy bird.png').convert_alpha()
 
 class GameObject:
     def __init__(self, x, y, width, height, color):
@@ -106,27 +109,32 @@ class RightButton(Button):
 
 
 class RegularPlayer(GameObject):
-    def __init__(self, x, y, size, color):
+    def __init__(self, x, y, size, color, image):
         super().__init__(x, y, size, size, color)
+        self.image = pygame.transform.scale(image, (size, size))
         self.vel = 0
+
+    def draw(self, window):
+        window.blit(self.image, self.rect.topleft)
 
     def jump(self):
         self.vel = -10
 
 class HeavyPlayer(RegularPlayer):
-    def __init__(self, x, y, size, color):
-        super().__init__(x, y, size, color)
+    def __init__(self, x, y, size, color, image):
+        super().__init__(x, y, size, color, image)
 
     def jump(self):
         self.vel = -5
 
 class SmallPlayer(RegularPlayer):
-    def __init__(self, x, y, size, color):
-        super().__init__(x, y, size, color)
-        self.size = size // 2
+    def __init__(self, x, y, size, color, image):
+        new_size = int(size * 0.5)  # Reduce size by 30%
+        super().__init__(x, y, new_size, color, image)
 
     def jump(self):
         self.vel = -13
+
 
 class Obstacle(GameObject):
     def __init__(self, x, y, width, height, top_image, bottom_image):
@@ -147,7 +155,12 @@ class Game:
 
     def __init__(self):
         self.players = [RegularPlayer, HeavyPlayer, SmallPlayer]  # List of player classes
-        self.player_parameters = [(50, HEIGHT // 2 - 25, 50, WHITE), (50, HEIGHT // 2 - 25, 50, BLUE), (50, HEIGHT // 2 - 25, 30, BLACK)]  # List of player classes
+        self.player_parameters = [
+        (50, HEIGHT // 2 - 25, 50, WHITE, normal_player_image),
+        (50, HEIGHT // 2 - 25, 50, BLUE, punk_player_image),
+        (50, HEIGHT // 2 - 25, 50, BLACK, lazy_player_image)  # Keep size consistent
+        ]
+
         self.current_player_index = 0  # Start with the first player class
         self.player = self.get_current_player()  # Get the current player object
         self.obstacles = []
@@ -404,22 +417,17 @@ class Game:
         player_class = self.players[self.current_player_index]
         player_params = self.player_parameters[self.current_player_index]
         return player_class(*player_params)  # Instantiate player object with parameters
-    
-    def update_current_player_image(self):
-        if self.current_player_index == 0 or self.current_player_index == 1:
-            self.current_player_image = pygame.Surface((50, 50))
-            self.current_player_image_rect = self.current_player_image.get_rect(center=(WIDTH // 2, HEIGHT // 2))
-            if self.current_player_index == 0:
-                self.current_player_image.fill(WHITE)
-            elif self.current_player_index == 1:
-                self.current_player_image.fill(BLUE)
-        elif self.current_player_index == 2:
-            self.current_player_image = pygame.Surface((30, 30))
-            self.current_player_image.fill(BLACK)
-            self.current_player_image_rect = self.current_player_image.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 5))
 
-        # Draw the current player's image onto the surface
-        self.player.draw(self.current_player_image)
+    def update_current_player_image(self):
+        if self.current_player_index == 0:
+            self.current_player_image = normal_player_image
+        elif self.current_player_index == 1:
+            self.current_player_image = punk_player_image
+        elif self.current_player_index == 2:
+            self.current_player_image = lazy_player_image
+
+        self.current_player_image = pygame.transform.scale(self.current_player_image, (self.player.rect.width, self.player.rect.height))
+        self.current_player_image_rect = self.current_player_image.get_rect(center=(WIDTH // 2, HEIGHT // 2))
 
         # Blit the updated image onto the window
         WIN.blit(self.current_player_image, self.current_player_image_rect)
