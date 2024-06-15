@@ -8,7 +8,7 @@ pygame.mixer.init()
 # Set up display
 WIDTH, HEIGHT = 500, 500
 WIN = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Flappy Cube")
+pygame.display.set_caption("Flappy Bird")
 
 # Colors
 WHITE = (255, 255, 255)
@@ -66,6 +66,11 @@ lower_button_image = pygame.transform.scale(lower_button_image, (50, 50))
 mute_button_image = pygame.image.load('final/images/mute.png').convert_alpha()
 mute_button_image = pygame.transform.scale(mute_button_image, (50, 50))
 
+# bird image
+Normal_Bird_image = pygame.image.load('final/images/normal bird.png').convert_alpha()
+Lazy_Bird_image = pygame.image.load('final/images/lazy bird.png').convert_alpha()
+Small_Bird_image = pygame.image.load('final/images/small bird.png').convert_alpha()
+
 class GameObject:
     def __init__(self, x, y, width, height, color):
         self.rect = pygame.Rect(x, y, width, height)
@@ -94,7 +99,7 @@ class Button:
     def is_clicked(self, pos):
         return self.rect.collidepoint(pos)
     
-class LeftButton(Button):
+'''class LeftButton(Button):
     def __init__(self, x, y, width, height, color, text):
         super().__init__(x, y, width, height, color, text)
 
@@ -118,15 +123,15 @@ class RightButton(Button):
         if event.type == pygame.MOUSEBUTTONDOWN:
             if self.rect.collidepoint(event.pos):
                 return True
-        return False
+        return False'''
 
-class SettingButton(Button):
+class ImagesButton(Button):
     def __init__(self, x, y, width, height, image):
         super().__init__(x, y, width, height, None)
         self.image = image
 
     def draw(self, window):
-        window.blit(setting_button_image, (self.rect.x, self.rect.y))
+        window.blit(self.image, (self.rect.x, self.rect.y))
 
     def handle_event(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN:
@@ -134,7 +139,7 @@ class SettingButton(Button):
                 return True
         return False
     
-class PauseButton(Button):
+'''class PauseButton(Button):
     def __init__(self, x, y, width, height, image):
         super().__init__(x, y, width, height, None)
         self.image = image
@@ -160,12 +165,16 @@ class SoundButton(Button):
         if event.type == pygame.MOUSEBUTTONDOWN:
             if self.rect.collidepoint(event.pos):
                 return True
-        return False
+        return False'''
 
 class RegularPlayer(GameObject):
-    def __init__(self, x, y, size, color):
-        super().__init__(x, y, size, size, color)
+    def __init__(self, x, y, size, image):
+        super().__init__(x, y, size, size, image)
+        self.image = pygame.transform.scale(image, (size, size))
         self.vel = 0
+
+    def draw(self, window):
+        window.blit(self.image, self.rect.topleft)
 
     def jump(self):
         self.vel = -10
@@ -173,8 +182,8 @@ class RegularPlayer(GameObject):
         jump_sound.play()
 
 class HeavyPlayer(RegularPlayer):
-    def __init__(self, x, y, size, color):
-        super().__init__(x, y, size, color)
+    def __init__(self, x, y, size, image):
+        super().__init__(x, y, size, image)
 
     def jump(self):
         self.vel = -5
@@ -182,8 +191,8 @@ class HeavyPlayer(RegularPlayer):
         jump_sound.play()
 
 class SmallPlayer(RegularPlayer):
-    def __init__(self, x, y, size, color):
-        super().__init__(x, y, size, color)
+    def __init__(self, x, y, size, image):
+        super().__init__(x, y, size, image)
         self.size = size // 2
 
     def jump(self):
@@ -197,12 +206,30 @@ class Obstacle(GameObject):
         self.collided = False
         self.color = color
 
+    def generate_obstacle(window_width, obstacles_list, gap):
+        obstacle_width = 40
+        top_height = random.randint(50, window_width - gap - 50)
+        bottom_height = window_width - top_height - gap
+
+        # Define the probabilities for each color
+        color_probabilities = [(GREEN, 6), (RED, 3), (GOLD, 1)]
+
+        # Choose a random color based on the probabilities
+        color_choices = [color for color, prob in color_probabilities for _ in range(prob)]
+        color = random.choice(color_choices)
+
+        top_obstacle = Obstacle(window_width, 0, obstacle_width, top_height, color)
+        bottom_obstacle = Obstacle(window_width, top_height + gap, obstacle_width, bottom_height, color)
+        obstacles_list.extend([top_obstacle, bottom_obstacle])
+
 class Game:
     BUTTON_GAP = 20
 
     def __init__(self):
         self.players = [RegularPlayer, HeavyPlayer, SmallPlayer]  # List of player classes
-        self.player_parameters = [(50, HEIGHT // 2 - 25, 50, WHITE), (50, HEIGHT // 2 - 25, 50, BLUE), (50, HEIGHT // 2 - 25, 30, BLACK)]  # List of player classes
+        self.player_parameters = [(50, HEIGHT // 2 - 25, 50, Normal_Bird_image),
+         (50, HEIGHT // 2 - 25, 50, Lazy_Bird_image),
+         (50, HEIGHT // 2 - 25, 30, Small_Bird_image)]  # List of player classes
         self.current_player_index = 0  # Start with the first player class
         self.player = self.get_current_player()  # Get the current player object
         self.obstacles = []
@@ -219,38 +246,9 @@ class Game:
         self.game_started = False
         self.game_over = False
 
-        # Create left button
-        left_button_width, left_button_height = 50, 50
-        left_button_x = WIDTH // 2 - 100
-        left_button_y = HEIGHT // 2
-        self.left_button = LeftButton(left_button_x, left_button_y, left_button_width, left_button_height, None, None)
-
-        # Create right button
-        right_button_width, right_button_height = 50, 50
-        right_button_x = WIDTH // 2 + 50
-        right_button_y = HEIGHT // 2
-        self.right_button = RightButton(right_button_x, right_button_y, right_button_width, right_button_height, None, None)
-
         # Create current player image
         self.current_player_image = pygame.Surface((50, 50))
         self.current_player_image_rect = self.current_player_image.get_rect(center=(WIDTH // 2, HEIGHT // 2))
-
-        # Create pause button
-        pause_button_x = WIDTH - 50
-        pause_button_y = 0
-        self.pause_button = PauseButton(pause_button_x, pause_button_y, 50, 50, pause_button_image)
-
-        # Create resume button
-        resume_button_width, resume_button_height = 150, 50
-        resume_button_x = (WIDTH - resume_button_width) // 2
-        resume_button_y = HEIGHT // 2 + 50
-        self.resume_button = Button(resume_button_x, resume_button_y, resume_button_width, resume_button_height, GRAY, 'Resume')
-
-        # Create restart button
-        restart_button_width, restart_button_height = 150, 50
-        restart_button_x = (WIDTH - restart_button_width) // 2
-        restart_button_y = HEIGHT // 2 + 120
-        self.restart_button = Button(restart_button_x, restart_button_y, restart_button_width, restart_button_height, GRAY, 'Restart')
 
         self.paused = False
 
@@ -272,9 +270,38 @@ class Game:
         #Setting button
         setting_button_x = WIDTH - 50  # Adjusted x-coordinate
         setting_button_y = 0  # Adjusted y-coordinate
-        self.setting_button = SettingButton(setting_button_x, setting_button_y, button_width, button_height, setting_button_image)
+        self.setting_button = ImagesButton(setting_button_x, setting_button_y, button_width, button_height, setting_button_image)
 
-    def generate_obstacle(self, gap):
+        # Create left button
+        left_button_width, left_button_height = 50, 50
+        left_button_x = WIDTH // 2 - 100
+        left_button_y = HEIGHT // 2
+        self.left_button = ImagesButton(left_button_x, left_button_y, left_button_width, left_button_height, left_button_image)
+
+        # Create right button
+        right_button_width, right_button_height = 50, 50
+        right_button_x = WIDTH // 2 + 50
+        right_button_y = HEIGHT // 2
+        self.right_button = ImagesButton(right_button_x, right_button_y, right_button_width, right_button_height, right_button_image)
+
+        # Create pause button
+        pause_button_x = WIDTH - 50
+        pause_button_y = 0
+        self.pause_button = ImagesButton(pause_button_x, pause_button_y, 50, 50, pause_button_image)
+
+        # Create resume button
+        resume_button_width, resume_button_height = 150, 50
+        resume_button_x = (WIDTH - resume_button_width) // 2
+        resume_button_y = HEIGHT // 2 + 50
+        self.resume_button = Button(resume_button_x, resume_button_y, resume_button_width, resume_button_height, GRAY, 'Resume')
+
+        # Create restart button
+        restart_button_width, restart_button_height = 150, 50
+        restart_button_x = (WIDTH - restart_button_width) // 2
+        restart_button_y = HEIGHT // 2 + 120
+        self.restart_button = Button(restart_button_x, restart_button_y, restart_button_width, restart_button_height, GRAY, 'Restart')
+
+    '''def generate_obstacle(self, gap):
         self.gap = gap
         obstacle_width = 40
         top_height = random.randint(50, HEIGHT - gap - 50)
@@ -289,7 +316,7 @@ class Game:
         
         top_obstacle = Obstacle(WIDTH, 0, obstacle_width, top_height, color)
         bottom_obstacle = Obstacle(WIDTH, top_height + gap, obstacle_width, bottom_height, color)
-        self.obstacles.extend([top_obstacle, bottom_obstacle])
+        self.obstacles.extend([top_obstacle, bottom_obstacle])'''
 
     def draw_score(self):
         score_text = font.render(f"Score: {self.score}", True, WHITE)
@@ -362,7 +389,7 @@ class Game:
                 self.end_game()
 
             if len(self.obstacles) == 0 or self.obstacles[-1].rect.x < WIDTH - self.obstacles_distance:
-                self.generate_obstacle(self.gap)
+                Obstacle.generate_obstacle(WIDTH, self.obstacles, self.gap)
                 self.gap = self.gap - 5 if self.gap > 70 else 70
 
             for obstacle in self.obstacles:
@@ -454,7 +481,7 @@ class Game:
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    ranking_screen = False
+                    pygame.quit()
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if return_button_rect.collidepoint(event.pos):  # Check if return button is clicked
                         ranking_screen = False
@@ -610,28 +637,23 @@ class Game:
         return player_class(*player_params)  # Instantiate player object with parameters
     
     def update_current_player_image(self):
-        if self.current_player_index == 0 or self.current_player_index == 1:
-            self.current_player_image = pygame.Surface((50, 50))
-            self.current_player_image_rect = self.current_player_image.get_rect(center=(WIDTH // 2, HEIGHT // 2))
-            if self.current_player_index == 0:
-                self.current_player_image.fill(WHITE)
-            elif self.current_player_index == 1:
-                self.current_player_image.fill(BLUE)
+        if self.current_player_index == 0:
+            self.current_player_image = Normal_Bird_image
+        elif self.current_player_index == 1:
+            self.current_player_image = Lazy_Bird_image
         elif self.current_player_index == 2:
-            self.current_player_image = pygame.Surface((30, 30))
-            self.current_player_image.fill(BLACK)
-            self.current_player_image_rect = self.current_player_image.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 5))
+            self.current_player_image = Small_Bird_image
 
-        # Draw the current player's image onto the surface
-        self.player.draw(self.current_player_image)
+        self.current_player_image = pygame.transform.scale(self.current_player_image, (self.player.rect.width, self.player.rect.height))
+        self.current_player_image_rect = self.current_player_image.get_rect(center=(WIDTH // 2, HEIGHT // 2))
 
         # Blit the updated image onto the window
         WIN.blit(self.current_player_image, self.current_player_image_rect)
-
+        
     def get_current_player_description(self):
-        descriptions = ["Regular Player: Jumps normally.",
-                        "Heavy Player: Jumps less higher.",
-                        "Small Player: Smaller size."]
+        descriptions = ["Regular Bird: Jumps normally.",
+                        "Heavy Bird: Jumps less higher.",
+                        "Small Bird: Smaller size."]
         return descriptions[self.current_player_index]
         
     def run(self):
