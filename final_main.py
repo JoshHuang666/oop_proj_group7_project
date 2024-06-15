@@ -1,8 +1,5 @@
 import pygame
 import random
-import pygame_widgets
-from pygame_widgets.slider import Slider
-from pygame_widgets.textbox import TextBox
 
 # Initialize Pygame
 pygame.init()
