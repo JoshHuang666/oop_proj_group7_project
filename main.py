@@ -303,8 +303,10 @@ class Game:
         while len(self.best_scores) < 3:
             self.best_scores.append(0)
 
+        scorelist = self.best_scores[:-2]
+
         # Create a DataFrame
-        df = pd.DataFrame(self.best_scores, columns=['Score'])
+        df = pd.DataFrame(scorelist, columns=['Score'])
         df.index.name = 'Rank'
         df.index += 1  # Rank starts from 1
 
@@ -316,8 +318,10 @@ class Game:
         while len(self.best_scores) < 3:
             self.best_scores.append(0)
 
+        scorelist = self.best_scores[:-2]
+
         # Create a DataFrame
-        df = pd.DataFrame(self.best_scores, columns=['Score'])
+        df = pd.DataFrame(scorelist, columns=['Score'])
         df.index.name = 'Rank'
         df.index += 1  # Rank starts from 1
 
