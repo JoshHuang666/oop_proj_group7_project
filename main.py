@@ -335,7 +335,7 @@ class Game:
         self.best_scores = df['Score'].tolist()
 
     def show_ranking(self):
-        ranking = self.best_scores  # Get the best scores
+        ranking = self.best_scores[:3]  # Get the best scores
         while len(ranking) < 3:  # Fill the remaining slots with zeros if needed
             ranking.append(0)
         ranking_screen = True
@@ -358,7 +358,7 @@ class Game:
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    ranking_screen = False
+                    pygame.quit()
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if return_button_rect.collidepoint(event.pos):  # Check if return button is clicked
                         ranking_screen = False
