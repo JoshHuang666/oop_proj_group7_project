@@ -1,4 +1,5 @@
 import pygame
+import pandas as pd
 
 # Initialize Pygame
 pygame.init()
@@ -283,16 +284,54 @@ class Game:
         self.game_over = True
         self.best_scores.append(self.score)  # Add the current score to the list of all scores
         self.best_scores.sort(reverse=True)  # Sort the list of all scores in descending order
-        self.best_scores = self.best_scores[:3]  # Update the best three scores
+        self.best_scores = self.best_scores[:10]  # Keep only the top 10 scores
         self.player.vel = 0  # Reset the player's velocity for the next game
-        self.paused = False  # Ensure game is not paused when ending
+        self.paused = False  # Ensure the game is not paused when ending
         pygame.mixer.music.stop()
         game_over_sound.play()
         background_music2 = pygame.mixer.music.load('final/audio/background_music2.wav')
         pygame.mixer.music.play(-1)  # Play the new background music indefinitely
+        
+        # Display scores using Pandas
+        self.display_scores_with_pandas()
+
+        # Export scores to CSV
+        self.export_scores_to_csv()
+
+    def display_scores_with_pandas(self):
+        # Ensure there are at least 3 scores
+        while len(self.best_scores) < 3:
+            self.best_scores.append(0)
+
+        # Create a DataFrame
+        df = pd.DataFrame(self.best_scores, columns=['Score'])
+        df.index.name = 'Rank'
+        df.index += 1  # Rank starts from 1
+
+        print("Best Scores DataFrame:")
+        print(df)
+
+    def export_scores_to_csv(self, filename='best_scores.csv'):
+        # Ensure there are at least 3 scores
+        while len(self.best_scores) < 3:
+            self.best_scores.append(0)
+
+        # Create a DataFrame
+        df = pd.DataFrame(self.best_scores, columns=['Score'])
+        df.index.name = 'Rank'
+        df.index += 1  # Rank starts from 1
+
+        # Save the DataFrame to a CSV file
+        df.to_csv(filename)
+
+    def read_scores_from_csv(self, filename='best_scores.csv'):
+        # Read the scores from the CSV file into a DataFrame
+        df = pd.read_csv(filename, index_col='Rank')
+        # Update best_scores list with the scores from the DataFrame
+        self.best_scores = df['Score'].tolist()
 
     def show_ranking(self):
-        ranking = self.best_scores  # Get the best three scores
+        ranking = self.best_scores  # Get the best scores
         while len(ranking) < 3:  # Fill the remaining slots with zeros if needed
             ranking.append(0)
         ranking_screen = True
@@ -315,7 +354,7 @@ class Game:
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    pygame.quit()
+                    ranking_screen = False
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if return_button_rect.collidepoint(event.pos):  # Check if return button is clicked
                         ranking_screen = False
